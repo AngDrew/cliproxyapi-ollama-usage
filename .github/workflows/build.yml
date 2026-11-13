@@ -1,0 +1,54 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build tested Linux glibc plugin
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF_TYPE" != tag ]]; then VERSION=0.1.0; fi
+          docker buildx build --platform linux/${{ matrix.arch }} --build-arg VERSION="$VERSION" --output type=local,dest=dist .
+          cd dist
+          tar czf ollama-usage-linux-${{ matrix.arch }}-glibc.tar.gz ollama-usage.so
+          sha256sum *.tar.gz > SHA256SUMS-linux-${{ matrix.arch }}
+      - name: Test real CLIProxyAPI against fake HTTPS Ollama
+        run: |
+          python3 tests/integration.py --image eceasy/cli-proxy-api:v8.0.52
+          python3 tests/integration.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ollama-usage-linux-${{ matrix.arch }}-glibc
+          path: |
+            dist/*.tar.gz
+            dist/SHA256SUMS-*
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes dist/*.tar.gz dist/SHA256SUMS-*

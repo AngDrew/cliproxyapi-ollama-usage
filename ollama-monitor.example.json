@@ -1,0 +1,5 @@
+{
+  "type": "ollama-usage",
+  "label": "Ollama Cloud",
+  "api_key_env": "OLLAMA_API_KEY"
+}
