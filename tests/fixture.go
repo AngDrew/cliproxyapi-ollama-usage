@@ -33,7 +33,11 @@ func main() {
 				fmt.Fprint(w, `{"included":{"balance_usd":72.5,"allowance_usd":100,"period":{"from":"2099-09-15T09:30:00Z","until":"2099-10-15T09:30:00Z"}},"purchased":{"balance_usd":25}}`)
 			}
 		case "/api/usage?range=24h":
-			fmt.Fprint(w, `{"range":"24h","totals":{"usage_usd":0.01718,"request_count":15,"input_tokens":106000,"cached_input_tokens":46000,"output_tokens":13600}}`)
+			if key == "Bearer legacy-key" {
+				fmt.Fprint(w, `{"range":"24h","totals":{"request_count":15}}`)
+			} else {
+				fmt.Fprint(w, `{"range":"24h","totals":{"usage_usd":0.01718,"request_count":15,"input_tokens":106000,"cached_input_tokens":46000,"output_tokens":13600}}`)
+			}
 		default:
 			w.WriteHeader(404)
 		}

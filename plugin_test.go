@@ -29,6 +29,10 @@ func TestNormalize(t *testing.T) {
 	if err != nil || q.Groups[0].Buckets[0].RemainingFraction != 0.75 || q.Groups[0].Buckets[1].RemainingFraction != 0.4 {
 		t.Fatalf("bad legacy quota: %+v %v", q, err)
 	}
+	q, err = normalize([]byte(legacy), []byte(`{"range":"24h","totals":{"request_count":15}}`))
+	if err != nil || len(q.Summary) != 2 || q.Summary[1].Key != "request_count_24h" || q.Summary[1].Value != 15 {
+		t.Fatalf("request-only plans must omit unavailable spend/tokens: %+v %v", q, err)
+	}
 	q, err = normalize([]byte(strings.Replace(creditBalance, `"allowance_usd":100`, `"allowance_usd":0`, 1)), []byte(usageBody))
 	if err != nil || len(q.Groups) != 0 || q.Summary[0].Value != 72.5 {
 		t.Fatal("zero allowance must retain money without inventing a percentage")
@@ -38,7 +42,7 @@ func TestNormalize(t *testing.T) {
 			t.Fatalf("accepted invalid balance: %s", bad)
 		}
 	}
-	for _, bad := range []string{"{}", "null", strings.Replace(usageBody, "24h", "7d", 1), strings.Replace(usageBody, "15,", "-1,", 1), strings.Replace(usageBody, "106000", "0.5", 1)} {
+	for _, bad := range []string{"{}", "null", strings.Replace(usageBody, "24h", "7d", 1), strings.Replace(usageBody, "15,", "-1,", 1), strings.Replace(usageBody, "106000", "0.5", 1), strings.Replace(usageBody, "0.01718", "-1", 1), `{"range":"24h","totals":{}}`} {
 		if _, err := normalize([]byte(creditBalance), []byte(bad)); err == nil {
 			t.Fatalf("accepted invalid usage: %s", bad)
 		}

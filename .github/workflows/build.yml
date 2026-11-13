@@ -22,7 +22,7 @@ jobs:
       - name: Build tested Linux glibc plugin
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          if [[ "$GITHUB_REF_TYPE" != tag ]]; then VERSION=0.1.0; fi
+          if [[ "$GITHUB_REF_TYPE" != tag ]]; then VERSION=0.1.1; fi
           docker buildx build --platform linux/${{ matrix.arch }} --build-arg VERSION="$VERSION" --output type=local,dest=dist .
           cd dist
           tar czf ollama-usage-linux-${{ matrix.arch }}-glibc.tar.gz ollama-usage.so

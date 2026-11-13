@@ -17,7 +17,7 @@ import (
 
 const pluginID = "ollama-usage"
 
-var version = "0.1.0"
+var version = "0.1.1"
 
 type hostCall func(string, any, any) error
 
@@ -294,10 +294,15 @@ func normalize(balanceJSON, usageJSON []byte) (quota, error) {
 	}
 	add("purchased_balance_usd", "Purchased balance", *balance.Purchased.Balance, true)
 	total := usage.Totals
-	if !finite(total.Spend) || *total.Spend < 0 || !count(total.Requests) {
+	if !count(total.Requests) {
 		return result, invalid
 	}
-	add("usage_usd_24h", "Spend · 24h", *total.Spend, true)
+	if total.Spend != nil {
+		if !finite(total.Spend) || *total.Spend < 0 {
+			return result, invalid
+		}
+		add("usage_usd_24h", "Spend · 24h", *total.Spend, true)
+	}
 	add("request_count_24h", "Requests · 24h", *total.Requests, false)
 	for _, field := range []struct {
 		key, label string

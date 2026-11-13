@@ -119,7 +119,11 @@ plugins:
                     expected = 0.725 if kind == "credits" else 0.75
                     assert response["groups"][0]["buckets"][0]["remainingFraction"] == expected, response
                     summary = {m["key"]: m["value"] for m in response["summary"]}
-                    assert summary["usage_usd_24h"] == 0.01718 and summary["purchased_balance_usd"] == 25, response
+                    assert summary["purchased_balance_usd"] == 25 and summary["request_count_24h"] == 15, response
+                    if kind == "credits":
+                        assert summary["usage_usd_24h"] == 0.01718, response
+                    else:
+                        assert "usage_usd_24h" not in summary and "input_tokens_24h" not in summary, response
                     assert "fixture-key" not in json.dumps(response), response
                 else:
                     phrase = {"missing": "API key is missing", "denied": "HTTP 401", "limited": "120 seconds"}[kind]

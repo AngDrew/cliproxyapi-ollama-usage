@@ -5,7 +5,7 @@ Ollama appears in **Quota Management → Plugin**, using the existing management
 
 - Included credit balance, period allowance, purchased credits and billing reset.
 - Legacy plans: session (5-hour) and weekly quota left, with reset timestamps.
-- Last 24 hours: spend, requests, input/cached-input/output tokens.
+- Last 24 hours: requests, plus spend and input/cached-input/output tokens when the plan reports them.
 - Server-side Bearer authentication; keys never appear in the plugin quota response.
 - A 60-second per-key cache, ten-second deadline per upstream request, and `Retry-After` backoff on HTTP 429.
 - No inference hooks, model registration, quota resets, database or background polling.
@@ -126,6 +126,7 @@ The v8 management UI uses `POST /v8/management/plugins/ollama-usage/quota` with 
 
 ## Scope, freshness and errors
 
+- Some legacy plans report only request counts. Missing spend/token fields are omitted, not presented as zero.
 - Usage is Ollama's `self` scope over the last 24h window, across clients—not a CLIProxyAPI-only traffic ledger. Included/purchased balances may be shared across a team.
 - Ollama usage can lag. The plugin does not equate usage totals with remaining quota.
 - Ollama documents a balance limit of 10 requests/minute per user, shared across keys/devices. The plugin caches per key for one minute; avoid unnecessary duplicate monitors/pollers.
